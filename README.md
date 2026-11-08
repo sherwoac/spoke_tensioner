@@ -13,14 +13,39 @@ Licence: GPL-3.0-or-later (see `LICENSE`).
 
 ## Install
 
-```bash
-# Linux: PortAudio is needed by sounddevice
-sudo apt install libportaudio2
+Requirements: Python 3.9+ (developed on 3.14), a USB microphone, and a desktop session (the UI is a Matplotlib window).
 
-python3 -m venv ~/spoke_tensioner
-source ~/spoke_tensioner/bin/activate
-pip install sounddevice numpy matplotlib
+### 1. System packages (Linux, Debian/Ubuntu)
+
+```bash
+sudo apt install python3-venv python3-tk libportaudio2
 ```
+
+- `libportaudio2` is needed by `sounddevice` for audio input.
+- `python3-tk` provides the Tk backend Matplotlib uses for the window. Other backends (Qt) work if you have them.
+- macOS: `brew install portaudio`. Windows: nothing extra, the `sounddevice` wheel bundles PortAudio.
+
+### 2. Clone and create the virtual environment
+
+```bash
+git clone git@github.com:sherwoac/spoke_tensioner.git
+cd spoke_tensioner
+python3 -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+Python dependencies (`requirements.txt`): `numpy`, `sounddevice`, `matplotlib`. Last tested with numpy 2.5, sounddevice 0.5, matplotlib 3.11.
+
+The examples below assume the environment is active. If you keep the venv elsewhere (for example `~/spoke_tensioner`), activate that one instead.
+
+### 3. Find your microphone
+
+```bash
+python -c "import sounddevice as sd; print(sd.query_devices())"
+```
+
+Pass the index or a name substring as `--device` (for example `--device 0` or `--device rode`). If you get no input, check the OS lets the terminal use the microphone.
 
 ## Run
 
