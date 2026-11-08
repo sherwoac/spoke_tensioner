@@ -6,3 +6,5 @@ wheel_session*.json.bak
 *.json.bak
 *.json.tmp
 *.wav
+/wheel_*.json
+!examples/*.json

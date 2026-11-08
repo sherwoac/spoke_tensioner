@@ -98,6 +98,80 @@ Useful options (see `--help` for all):
 
 Spoke 1 is the spoke beside the valve on the disc side, and sides alternate around the rim.
 
+## Example: front wheel
+
+The wheel used to develop the tool: 28 spokes, 3x interlaced, Sapim Race 280 mm double-butted spokes (1.8 mm thin section), Chris King-style hub with the disc on the left.
+
+### The lengths
+
+A spoke has several lengths and only one of them is the right `L` for the formula:
+
+```
+ hub flange                    crossing                         rim
+ (spoke head)                  with partner spoke               (nipple)
+     |                              |                              |
+     o==============================X==============================o
+     |<----------------------------- 280 mm spoke ---------------->|
+     |<---------------------- 271 mm free length ----------------->|   --full-length 271
+     |                              |<------ 188 mm ------------->|   --fret-length 188
+     |<---------------------- 261 mm working length ------------->|   --length 261
+```
+
+| Length | Value | Option | What it is |
+|---|---|---|---|
+| Spoke | 280 mm | | Manufacturer length, tip to elbow |
+| Free length | 271 mm | `--full-length` | Whole free spoke, elbow to nipple seat, with the crossing partner held clear |
+| Crossing to nipple | 188 mm | `--fret-length` | Distance from the crossing to the nipple, used by calibration method 2 |
+| **Working length** | **261 mm** | `--length` | **The `L` in `T = 4 L² f² μ`.** Found by matching a phone app at about 80 kgf, not measured with a tape |
+
+On this wheel the crossing is a soft node: it does not clamp the spoke, so the normal pluck tone behaves as if almost the whole spoke vibrates. Using the 188 mm tape measurement gives tensions about 40% too low. The working length of 261 mm is not yet verified against a tensiometer.
+
+Hub geometry for the same wheel: flange distances 22.2 mm (left, disc) and 31.3 mm (right, non-disc), which are the defaults for `--flange-left` and `--flange-right`.
+
+### The command
+
+```bash
+python spoke_tension.py --device 0 --length 261 --full-length 271 --fret-length 188 \
+    --target 115 --session wheel_front.json
+```
+
+- `--device 0` is the USB microphone (index from `sd.query_devices()`).
+- `--target 115` is the final tension for the disc side in kgf. The non-disc target is 115 × the side ratio.
+- `--session wheel_front.json` stores readings and is reused next time you run, so you can stop and resume.
+
+### The session file
+
+[`examples/wheel_front.json`](examples/wheel_front.json) is a complete read of this wheel. The stored spectra are removed to keep it small (the real file is about 600 kB). The app loads it fine without them.
+
+| Field | Meaning |
+|---|---|
+| `n` | Number of spokes (28) |
+| `sides` | Side of each spoke by index: `L` = disc, `R` = non-disc. Spoke 1 is beside the valve and sides alternate |
+| `t` | Tension in kgf for each spoke, in order |
+| `f` | Measured pluck frequency in Hz for each spoke |
+| `spec` | 1 Hz spectrum of each pluck (nulled in the example) |
+| `length_m` | Working length used, in metres (`0.261`) |
+| `ratio` | Expected non-disc/disc ratio from the flanges, 22.2 / 31.3 = 0.709 |
+| `gain` | Kgf per full nipple turn used for turn recommendations, default 40 |
+| `gain_samples` | Gain measurements learned from logged passes |
+| `pass_log` | Uniform passes you logged with `p` |
+
+To try it without a microphone, copy it and point the app at it:
+
+```bash
+cp examples/wheel_front.json my_wheel.json
+python spoke_tension.py --session my_wheel.json --length 261 --target 115
+```
+
+### What the result looked like
+
+| Side | Mean | Range | Std dev |
+|---|---|---|---|
+| Disc (L) | 115.0 kgf | 110.5 – 119.9 | 2.7 |
+| Non-disc (R) | 94.5 kgf | 90.5 – 98.3 | 2.5 |
+
+The measured ratio is 94.5 / 115.0 = 0.82, against 0.71 expected from the flanges. That may mean the rim sits about 2 mm toward the non-disc side, so check dish before trusting the ratio.
+
 ## Physics and caveats — please read
 
 Tension is `T = 4 L² f² μ`, where `μ` is the mass per metre of the thin section of a double-butted spoke (about 20.1 g/m for 1.8 mm steel). In kgf this is roughly `0.0082 · L² · f²` with `L` in metres.
